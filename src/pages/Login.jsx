@@ -1,11 +1,15 @@
+import { useRef } from "react"
 import { Link } from "react-router"
 
 const Login = () => {
-    function logar(event){
+    const emailRef = useRef();
+    const senhaRef = useRef();
+
+    async function logar(event){
             event.preventDefault();
 
-            let email = document.querySelector("#email").value;
-            let senha = document.querySelector("#senha").value;
+            let email = emailRef.current.value;
+            let senha = senhaRef.current.value;
 
             let dados = {
                 email,
@@ -42,6 +46,7 @@ const Login = () => {
                     <label htmlFor="email" className="uppercase text-xs font-bold mb-2 block">Email</label>
                     <input
                         id="email"
+                        ref={emailRef}
                         type="email"
                         placeholder="email@email.com"
                         className="pl-3 h-10 border-2 border-slate-400 focus:border-purple-600 duration-150 rounded outline-none mb-4"
@@ -50,6 +55,7 @@ const Login = () => {
                     <label htmlFor="senha" className="uppercase text-xs font-bold mb-2 block">Senha</label>
                     <input
                         id="senha"
+                        ref={senhaRef}
                         type="password"
                         placeholder="********"
                         className="pl-3 h-10 border-2 border-slate-400 focus:border-purple-600 duration-150 rounded outline-none mb-4"
