@@ -5,27 +5,41 @@ const Login = () => {
     const emailRef = useRef();
     const senhaRef = useRef();
 
-    async function logar(event){
-            event.preventDefault();
+    async function logar(event) {
+        event.preventDefault();
 
-            let email = emailRef.current.value;
-            let senha = senhaRef.current.value;
+        let email = emailRef.current.value;
+        let senha = senhaRef.current.value;
 
-            let dados = {
-                email,
-                senha
+        let dados = {
+            email,
+            senha
+        }
+
+        try {
+            const { data } = await AXIOS.post("/login", dados);
+            if (data.tipo == "warning") {
+                alert(data.mensagem);
+                return;
             }
+            sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+            alert(data.mensagem);
+            navigate("/tarefas");
+        } catch (error) {
+            alert(error.response?.data?.mensagem ?? error.message);
+        }
 
-            fetch("https://js-lista-de-tarefas-api.onrender.com/login", {
-                method: "post",
-                headers: {
-                    "Content-type": "application/json"
-                },
-                body: JSON.stringify(dados)
-            })
+
+        fetch("https://js-lista-de-tarefas-api.onrender.com/login", {
+            method: "post",
+            headers: {
+                "Content-type": "application/json"
+            },
+            body: JSON.stringify(dados)
+        })
             .then(resposta => resposta.json())
             .then(json => {
-                if(json.tipo == "warning"){
+                if (json.tipo == "warning") {
                     alert(json.mensagem);
                     return;
                 }
