@@ -1,6 +1,8 @@
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router";
 
 const Cadastro = () => {
+    const navigate = useNavigate();
+
     function cadastrar(event) {
         event.preventDefault();
 
@@ -29,7 +31,10 @@ const Cadastro = () => {
                 }
 
                 alert(json.mensagem);
-                window.location.href = "index.html";
+                if (json.usuario) {
+                    sessionStorage.setItem("usuario", JSON.stringify(json.usuario));
+                }
+                navigate("/tarefas");
             })
             .catch(error => {
                 alert(error.message);
@@ -46,7 +51,7 @@ const Cadastro = () => {
                 <h1 className="font-bold text-xl mb-6">Cadastre-se</h1>
                 <form onSubmit={cadastrar} className="flex flex-col w-80">
                     <label htmlFor="nome" className="uppercase text-xs font-bold mb-2 block">Nome</label>
-                    <input id="nome" type="text" placeholder="seu nome" className="pl-3 h-10 border-2 focus:border-purple-600 duration-150 rounded outline-none mb-4" required />
+                    <input id="nome" type="text" placeholder="seu nome" className="pl-3 h-10 border-2 border-slate-400 focus:border-purple-600 duration-150 rounded outline-none mb-4" required />
 
                     <label htmlFor="email" className="uppercase text-xs font-bold mb-2 block">Email</label>
                     <input id="email" type="email" placeholder="email@email.com" className="pl-3 h-10 border-2 border-slate-400 focus:border-purple-600 duration-150 rounded outline-none mb-4" required />
@@ -55,10 +60,11 @@ const Cadastro = () => {
                     <input id="senha" type="password" placeholder="********" className="pl-3 h-10 border-2 border-slate-400 focus:border-purple-600 duration-150 rounded outline-none mb-4" required />
 
                     <button type="submit" className="w-full h-10 rounded bg-purple-400 hover:bg-purple-600 duration-200 hover:text-white font-bold">Cadastrar</button>
+
                 </form>
             </div>
         </div>
-    )
+    );
 }
 
-export default Cadastro
+export default Cadastro;

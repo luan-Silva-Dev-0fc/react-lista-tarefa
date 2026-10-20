@@ -1,55 +1,40 @@
-import { useRef } from "react"
-import { Link } from "react-router"
+import { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { AXIOS } from "../services";
 
 const Login = () => {
-    const emailRef = useRef();
-    const senhaRef = useRef();
+
+    const email = useRef(null);
+    const senha = useRef(null);
+    const navigate = useNavigate();
+    const [carregando, setCarregando] = useState(false);
 
     async function logar(event) {
         event.preventDefault();
 
-        let email = emailRef.current.value;
-        let senha = senhaRef.current.value;
-
+        setCarregando(true);
+        
         let dados = {
-            email,
-            senha
+            email: email.current.value,
+            senha: senha.current.value
         }
 
         try {
-            const { data } = await AXIOS.post("/login", dados);
-            if (data.tipo == "warning") {
-                alert(data.mensagem);
+            const resposta = await AXIOS.post("/login", dados);
+            
+            setCarregando(false);
+            
+            if (resposta.data.tipo == "warning") {
+                alert(resposta.data.mensagem);
                 return;
             }
-            sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
-            alert(data.mensagem);
+            sessionStorage.setItem("usuario", JSON.stringify(resposta.data.usuario));
+            alert(resposta.data.mensagem);
             navigate("/tarefas");
         } catch (error) {
-            alert(error.response?.data?.mensagem ?? error.message);
+            setCarregando(false);
+            alert(error.message)
         }
-
-
-        fetch("https://js-lista-de-tarefas-api.onrender.com/login", {
-            method: "post",
-            headers: {
-                "Content-type": "application/json"
-            },
-            body: JSON.stringify(dados)
-        })
-            .then(resposta => resposta.json())
-            .then(json => {
-                if (json.tipo == "warning") {
-                    alert(json.mensagem);
-                    return;
-                }
-                sessionStorage.setItem("usuario", JSON.stringify(json.usuario));
-                alert(json.mensagem);
-                window.location.href = "tarefas.html";
-            })
-            .catch(error => {
-                alert(error.message);
-            })
     }
 
     return (
@@ -60,7 +45,7 @@ const Login = () => {
                     <label htmlFor="email" className="uppercase text-xs font-bold mb-2 block">Email</label>
                     <input
                         id="email"
-                        ref={emailRef}
+                        ref={email}
                         type="email"
                         placeholder="email@email.com"
                         className="pl-3 h-10 border-2 border-slate-400 focus:border-purple-600 duration-150 rounded outline-none mb-4"
@@ -69,23 +54,18 @@ const Login = () => {
                     <label htmlFor="senha" className="uppercase text-xs font-bold mb-2 block">Senha</label>
                     <input
                         id="senha"
-                        ref={senhaRef}
+                        ref={senha}
                         type="password"
                         placeholder="********"
                         className="pl-3 h-10 border-2 border-slate-400 focus:border-purple-600 duration-150 rounded outline-none mb-4"
                         required
                     />
-                    <Link to="/cadastrar" className="my-5">Cadastre-se</Link>
-                    <button
-                        type="submit"
-                        className="w-full h-10 rounded bg-purple-400 hover:bg-purple-600 duration-200 hover:text-white font-bold"
-                    >
-                        Logar
-                    </button>
+                    <Link to="cadastro" className="my-5">Cadastre-se</Link>
+                    <button disabled={carregando} type="submit" className="w-full h-10 rounded bg-purple-400 hover:bg-purple-600 duration-200 hover:text-white font-bold">{ carregando ? "Carregando..." : "Logar"}</button>
                 </form>
             </div>
         </div>
-    )
+    );
 }
 
-export default Login
+export default Login;

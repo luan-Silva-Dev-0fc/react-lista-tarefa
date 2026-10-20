@@ -1,11 +1,11 @@
-import Rotas from "./routes/Rotas"
+import Rotas from "./routes/Rotas";
 
 const App = () => {
   return (
     <>
       <Rotas />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
