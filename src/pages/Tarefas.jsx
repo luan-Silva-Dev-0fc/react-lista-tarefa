@@ -25,39 +25,6 @@ const Tarefas = () => {
 
     useEffect(() => {
         buscarTarefas();
-
-        window.abrirFormEditar = (id) => {
-            let formEditar = document.querySelector("#form-editar");
-            let tarefa = tarefasRef.current.find(t => t.id === id);
-            if (formEditar) {
-                formEditar.classList.remove("opacity-0", "invisible");
-                formEditar.classList.add("opacity-100", "visible");
-                if (tarefa) {
-                    const idInput = document.querySelector("#idEdicao");
-                    const tituloInput = document.querySelector("#tituloEdicao");
-                    const descInput = document.querySelector("#descricaoEdicao");
-                    if (idInput) idInput.value = tarefa.id;
-                    if (tituloInput) tituloInput.value = tarefa.titulo;
-                    if (descInput) descInput.value = tarefa.descricao;
-                }
-            }
-        };
-
-        window.deletarTarefa = async (id) => {
-            if (!confirm("Deseja realmente excluir esta tarefa?")) return;
-            try {
-                const resposta = await AXIOS.delete(`/tarefas/${id}`);
-                alert(resposta.data.mensagem);
-                buscarTarefas();
-            } catch (error) {
-                alert("Erro ao excluir tarefa: " + error.message);
-            }
-        };
-
-        return () => {
-            delete window.abrirFormEditar;
-            delete window.deletarTarefa;
-        };
     }, []);
 
     function carregarTarefas(listaTarefas) {
@@ -82,7 +49,7 @@ const Tarefas = () => {
         }
     }
 
-    async function fecharFormCriar() {
+    function fecharFormCriar() {
         SetFormCriar(false);
     }
 
@@ -121,11 +88,38 @@ const Tarefas = () => {
         }
     }
 
+    // --- FUNÇÕES DE EDITAR E APAGAR (EMBAIXO) ---
+
+    function abrirFormEditar(id) {
+        let formEditar = document.querySelector("#form-editar");
+        let overlay = document.querySelector("#overlay");
+        let tarefa = tarefasRef.current.find(t => t.id === id);
+        if (formEditar) {
+            formEditar.classList.remove("opacity-0", "invisible");
+            formEditar.classList.add("opacity-100", "visible");
+            if (overlay) {
+                overlay.classList.remove("opacity-0", "invisible");
+                overlay.classList.add("opacity-100", "visible");
+            }
+            if (tarefa) {
+                document.querySelector("#idEdicao").value = tarefa.id;
+                document.querySelector("#tituloEdicao").value = tarefa.titulo;
+                document.querySelector("#descricaoEdicao").value = tarefa.descricao;
+            }
+        }
+    }
+    window.abrirFormEditar = abrirFormEditar;
+
     function fecharFormEditar() {
         let formEditar = document.querySelector("#form-editar");
+        let overlay = document.querySelector("#overlay");
         if (formEditar) {
             formEditar.classList.add("opacity-0", "invisible");
             formEditar.classList.remove("opacity-100", "visible");
+        }
+        if (overlay && !formCriar) {
+            overlay.classList.add("opacity-0", "invisible");
+            overlay.classList.remove("opacity-100", "visible");
         }
     }
 
@@ -147,9 +141,21 @@ const Tarefas = () => {
             fecharFormEditar();
             buscarTarefas();
         } catch (error) {
-            alert("Erro: " + error.message);
+            alert("Erro ao editar tarefa: " + error.message);
         }
     }
+
+    async function deletarTarefa(id) {
+        if (!confirm("Deseja realmente apagar esta tarefa?")) return;
+        try {
+            const resposta = await AXIOS.delete(`/tarefas/${id}`);
+            alert(resposta.data.mensagem);
+            buscarTarefas();
+        } catch (error) {
+            alert("Erro ao apagar tarefa: " + error.message);
+        }
+    }
+    window.deletarTarefa = deletarTarefa;
 
     return (
         <div>
@@ -172,7 +178,7 @@ const Tarefas = () => {
                 <div id="tarefas" className="grid grid-cols-3 gap-4"></div>
                 <div
                     id="overlay"
-                    onClick={() => SetFormCriar(false)}
+                    onClick={() => { SetFormCriar(false); fecharFormEditar(); }}
                     className={`w-full h-screen bg-black/70 fixed top-0 left-0 duration-200 ${formCriar ? "opacity-100 visible" : "opacity-0 invisible"}`}
                 ></div>
                 <div id="form-criar"
