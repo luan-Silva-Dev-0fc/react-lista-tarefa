@@ -8,23 +8,63 @@ const Tarefas = () => {
     const tituloCria = useRef(null);
     const descricaoCria = useRef(null);
     
+    const tarefasRef = useRef([]);
+
     function pesquisarTarefa(palavra) {
-        if (palavra.length == 0) {
-            setTarefas(tarefas);
+        if (!palavra || palavra.trim().length === 0) {
+            carregarTarefas(tarefasRef.current);
             return;
         }
         if (palavra.length >= 3) {
-            let tarefasFiltradas = tarefas.filter(tarefa => tarefa.titulo.toLowerCase().includes(palavra.toLowerCase()))
-            setTarefas(tarefasFiltradas);
+            let tarefasFiltradas = tarefasRef.current.filter(tarefa =>
+                tarefa.titulo.toLowerCase().includes(palavra.toLowerCase())
+            );
+            carregarTarefas(tarefasFiltradas);
         }
     }
+
     useEffect(() => {
         buscarTarefas();
+
+        window.abrirFormEditar = (id) => {
+            let formEditar = document.querySelector("#form-editar");
+            let tarefa = tarefasRef.current.find(t => t.id === id);
+            if (formEditar) {
+                formEditar.classList.remove("opacity-0", "invisible");
+                formEditar.classList.add("opacity-100", "visible");
+                if (tarefa) {
+                    const idInput = document.querySelector("#idEdicao");
+                    const tituloInput = document.querySelector("#tituloEdicao");
+                    const descInput = document.querySelector("#descricaoEdicao");
+                    if (idInput) idInput.value = tarefa.id;
+                    if (tituloInput) tituloInput.value = tarefa.titulo;
+                    if (descInput) descInput.value = tarefa.descricao;
+                }
+            }
+        };
+
+        window.deletarTarefa = async (id) => {
+            if (!confirm("Deseja realmente excluir esta tarefa?")) return;
+            try {
+                const resposta = await AXIOS.delete(`/tarefas/${id}`);
+                alert(resposta.data.mensagem);
+                buscarTarefas();
+            } catch (error) {
+                alert("Erro ao excluir tarefa: " + error.message);
+            }
+        };
+
+        return () => {
+            delete window.abrirFormEditar;
+            delete window.deletarTarefa;
+        };
     }, []);
+
     function carregarTarefas(listaTarefas) {
         let grid = document.querySelector("#tarefas");
+        if (!grid) return;
         grid.innerHTML = "";
-        if (listaTarefas.length == 0) {
+        if (!Array.isArray(listaTarefas) || listaTarefas.length === 0) {
             grid.innerHTML = "<p>Crie sua primeira tarefa</p>";
         } else {
             listaTarefas.map(tarefa => {
@@ -38,10 +78,9 @@ const Tarefas = () => {
                     </div>
                 </div>
             `;
-            })
+            });
         }
     }
-
 
     async function fecharFormCriar() {
         SetFormCriar(false);
@@ -55,7 +94,7 @@ const Tarefas = () => {
                 titulo: tituloCria.current?.value || document.querySelector("#titulo")?.value,
                 descricao: descricaoCria.current?.value || document.querySelector("#descricao")?.value,
                 usuario_id: usuario ? usuario.id : null
-            }
+            };
 
             const resposta = await AXIOS.post("/tarefas", dados);
 
@@ -66,19 +105,20 @@ const Tarefas = () => {
             alert("Erro: " + error.message);
         }
     }
-    function buscarTarefas() {
+
+    async function buscarTarefas() {
         let usuario = JSON.parse(sessionStorage.getItem("usuario")) || null;
         if (!usuario) return;
 
-        fetch(`https://js-lista-de-tarefas-api.onrender.com/tarefas?usuario_id=${usuario.id}`)
-            .then(resposta => resposta.json())
-            .then(json => {
-                setTarefas(json);
-                carregarTarefas(json);
-            })
-            .catch(error => {
-                console.error("Erro ao buscar tarefas:", error);
-            });
+        try {
+            const resposta = await AXIOS.get(`/tarefas/${usuario.id}`);
+            const dados = Array.isArray(resposta.data) ? resposta.data : [];
+            setTarefas(dados);
+            tarefasRef.current = dados;
+            carregarTarefas(dados);
+        } catch (error) {
+            console.error("Erro ao buscar tarefas:", error);
+        }
     }
 
     function fecharFormEditar() {
@@ -89,7 +129,7 @@ const Tarefas = () => {
         }
     }
 
-    function editarTarefa(event) {
+    async function editarTarefa(event) {
         event.preventDefault();
         try {
             let usuario = JSON.parse(sessionStorage.getItem("usuario")) || null;
@@ -100,21 +140,12 @@ const Tarefas = () => {
                 titulo: titulo?.value,
                 descricao: descricao?.value,
                 usuario_id: usuario ? usuario.id : null
-            }
+            };
 
-            fetch(`https://js-lista-de-tarefas-api.onrender.com/tarefas/${id.value}`, {
-                method: "put",
-                headers: {
-                    "Content-type": "application/json"
-                },
-                body: JSON.stringify(dados)
-            })
-            .then(resposta => resposta.json())
-            .then(json => {
-                alert(json.mensagem);
-                fecharFormEditar();
-                buscarTarefas();
-            })
+            const resposta = await AXIOS.put(`/tarefas/${id.value}`, dados);
+            alert(resposta.data.mensagem);
+            fecharFormEditar();
+            buscarTarefas();
         } catch (error) {
             alert("Erro: " + error.message);
         }
@@ -182,7 +213,7 @@ const Tarefas = () => {
                             className="pl-3 h-30 border-2 border-slate-400 focus:border-purple-600 duration-150 rounded outline-none mb-4"
                             required></textarea>
                         <button type="submit"
-                            className="w-full h-10 rounded bg-purple-400 hover:bg-purple-600 duration-200 hover:text-white font-bold">Criar</button>
+                            className="w-full h-10 rounded bg-purple-400 hover:bg-purple-600 duration-200 hover:text-white font-bold">Salvar</button>
                     </form>
                 </div>
             </main>
